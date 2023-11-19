@@ -1,0 +1,41 @@
+// Получите текущее значение из msg.payload
+var currentValue = msg.payload;
+
+// Задайте целевое значение (например, из вашего ReadModbus)
+var targetValue = 100;  // Замените этим значением из вашего ReadModbus
+
+// Задайте шаг изменения (насколько значение должно увеличиваться или уменьшаться за каждый период)
+var step = 1;
+
+// Установите интервал (в миллисекундах) между каждым изменением значения
+var interval = 100;  // Здесь можно настроить интервал по вашему выбору
+
+// Рассчитайте количество шагов, необходимых для достижения целевого значения
+var stepsNeeded = Math.abs(targetValue - currentValue) / step;
+
+// Рассчитайте, сколько времени займет изменение значения до целевого значения
+var totalDuration = stepsNeeded * interval;
+
+// Запустите таймер, который будет изменять значение с интервалом
+var timer = setInterval(function() {
+    // Если текущее значение ближе к целевому, завершите таймер
+    if (Math.abs(targetValue - currentValue) <= step) {
+        clearInterval(timer);
+        currentValue = targetValue;
+    } else {
+        // Измените значение в направлении к целевому значению
+        currentValue += (targetValue - currentValue > 0) ? step : -step;
+
+        // Отправьте новое значение в следующий узел
+        msg.payload = currentValue;
+        node.send(msg);
+    }
+}, interval);
+
+// Остановите таймер после достижения целевого значения
+setTimeout(function() {
+    clearInterval(timer);
+}, totalDuration);
+
+// Возвращаем null, чтобы предотвратить отправку исходного сообщения
+return null;
